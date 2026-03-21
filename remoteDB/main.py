@@ -38,3 +38,4 @@ def request_table_data():
 		print(f"Error querying database: {e}")
 		return jsonify({'error': 'database query failed'}), 500
 		
+app.run(debug=True)

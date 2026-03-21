@@ -29,7 +29,7 @@ CREATE TABLE "posts" (
 
 conn = connect_db('database.db')
 conn.execute('''
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"id"	TEXT,
 	"username"	VARCHAR(255) UNIQUE,
 	"password"	VARCHAR(255),
@@ -38,22 +38,14 @@ CREATE TABLE "users" (
 ''')
 
 conn.execute('''
-CREATE TABLE "posts" (
+CREATE TABLE IF NOT EXISTS "posts" (
 	"id"	TEXT,
 	"username"	TEXT,
 	"title"	TEXT,
 	"content"	TEXT NOT NULL,
-	PRIMARY KEY("id")
+	PRIMARY KEY("id"),
 	FOREIGN KEY("username") REFERENCES "users"("username")
+);
 ''') 
-
-# conn.execute('''
-# CREATE TABLE profile_pictures (
-# 	"username"	TEXT,
-# 	"profile_picture"	BLOB,
-# 	PRIMARY KEY("username")
-# 	FOREIGN KEY("username") REFERENCES "users"("username")
-# );
-# ''')
 
 
