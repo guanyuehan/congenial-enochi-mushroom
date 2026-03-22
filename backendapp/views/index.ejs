@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/style.css">
+    <title>Mainframe</title>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="message-window">
+        <div class="header">Chat messages here</div>
+        
+        <div class="messages-list">
+          <% for (let post of posts) { %>
+            <div class="message-bubble">
+              <strong><%= post.title %></strong><br>
+              <%= post.content %><br>
+              <small>— <%= post.author %></small>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      <form method="POST" action="/post" style="width: 100%;">
+        <input type="text" name="title" class="chat-input" placeholder="Post title" required>
+        <textarea name="content" class="chat-input" placeholder="Your message" required style="resize: vertical; min-height: 60px;"></textarea>
+        <input type="text" name="author" class="chat-input" placeholder="Your name" required>
+        <button type="submit" class="post-button">Post Message</button>
+      </form>
+    </div>
+  </body>
+</html>
