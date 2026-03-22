@@ -23,13 +23,15 @@ body {
 /* The Orange Box */
 .message-window {
   background-color: #f1b351;
-  border: 4px solid #1e90ff;
   border-radius: 40px;
   padding: 20px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* White Header Pill */
