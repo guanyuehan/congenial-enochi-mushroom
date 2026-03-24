@@ -1,41 +1,105 @@
-from flask import Flask, request, jsonify
-from utils import connect_db, check_db_file_size
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import sqlite3
+import uuid
+from datetime import datetime
+from init_db import init_database, connect_db
 
-app = Flask(__name__) 
+app = Flask(__name__)
+CORS(app)
 
-@app.route('/api/get_posts', methods=['POST'])
-def request_table_data():
-	'''
-	requests data from a specified table in the database
+DB_PATH = 'database.db'
 
-	Post parameters (json):
-	table_name (str): name of the table to request data from
+# Initialize database on startup
+init_database(DB_PATH)
 
-	Returns:
-	(list of dicts): list of dictionaries, each representing a row in the table
-	'''
-	# checks 
-	if not check_db_file_size():
-		return jsonify({'error': 'database file size exceeds limit'}), 400
-	data = request.json
-	post_id = data.get('post_id')
-	user_id = data.get('user_id')
-	if not post_id:
-		return jsonify({'error': 'post_id is required'}), 400
-	
-	conn = connect_db('database.db')
+def get_db():
+	conn = connect_db(DB_PATH)
+	conn.row_factory = sqlite3.Row
+	return conn
 
-	if not conn:
-		return jsonify({'error': 'database connection failed'}), 500
+@app.route('/api/posts', methods=['GET'])
+def get_posts():
+	"""Get all posts ordered by date (newest first)"""
 	try:
+		conn = get_db()
 		cursor = conn.cursor()
-		cursor.execute(f"SELECT * FROM {table_name}")
+		cursor.execute('SELECT * FROM posts ORDER BY date DESC')
 		rows = cursor.fetchall()
+		posts = [dict(row) for row in rows]
 		conn.close()
-		return jsonify(rows), 200, {'Content-Type': 'application/json'}
-	except sqlite3.Error as e:
-		print(f"Error querying database: {e}")
-		return jsonify({'error': 'database query failed'}), 500
+		return jsonify(posts), 200
+	except Exception as e:
+		print(f"Error getting posts: {e}")
+		return jsonify({"error": str(e)}), 500
+
+@app.route('/api/posts', methods=['POST'])
+def create_post():
+	"""Create a new post"""
+	try:
+		data = request.json
 		
-app.run(debug=True)
+		if not data.get('content'):
+			return jsonify({"error": "Content is required"}), 400
+		
+		conn = get_db()
+		cursor = conn.cursor()
+		
+		post_id = str(uuid.uuid4())
+		cursor.execute('''
+			INSERT INTO posts (id, content, date)
+			VALUES (?, ?, ?)
+		''', (post_id, data['content'], datetime.now().isoformat()))
+		
+		conn.commit()
+		conn.close()
+		
+		return jsonify({
+			"id": post_id,
+			"content": data['content'],
+			"date": datetime.now().isoformat()
+		}), 201
+	except Exception as e:
+		print(f"Error creating post: {e}")
+		return jsonify({"error": str(e)}), 500
+
+@app.route('/api/posts/<post_id>', methods=['GET'])
+def get_post(post_id):
+	"""Get a single post by ID"""
+	try:
+		conn = get_db()
+		cursor = conn.cursor()
+		cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,))
+		row = cursor.fetchone()
+		conn.close()
+		
+		if not row:
+			return jsonify({"error": "Post not found"}), 404
+		
+		return jsonify(dict(row)), 200
+	except Exception as e:
+		print(f"Error getting post: {e}")
+		return jsonify({"error": str(e)}), 500
+
+@app.route('/api/posts/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+	"""Delete a post by ID"""
+	try:
+		conn = get_db()
+		cursor = conn.cursor()
+		cursor.execute('DELETE FROM posts WHERE id = ?', (post_id,))
+		conn.commit()
+		conn.close()
+		return jsonify({"message": "Post deleted"}), 200
+	except Exception as e:
+		print(f"Error deleting post: {e}")
+		return jsonify({"error": str(e)}), 500
+
+@app.route('/health', methods=['GET'])
+def health():
+	"""Health check endpoint"""
+	return jsonify({"status": "healthy"}), 200
+
+if __name__ == '__main__':
+	print("Starting Remote DB Server on http://localhost:5000")
+	app.run(host='localhost', port=5000, debug=False)

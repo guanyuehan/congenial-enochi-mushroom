@@ -1,51 +1,35 @@
 import sqlite3
+import os
 
 def connect_db(path):
 	try:
 		conn = sqlite3.connect(path)
+		conn.row_factory = sqlite3.Row
 		return conn
 	except sqlite3.Error as e:
 		print(f"Error connecting to database: {e}")
 		return None
+
+def init_database(db_path='database.db'):
+	conn = connect_db(db_path)
 	
-'''
-schema 
-CREATE TABLE "users" (
-	"id"	TEXT,
-	"username"	VARCHAR(255),
-	"profile_picture"	BLOB,
-	PRIMARY KEY("id","username")
-);
+	if conn is None:
+		return False
+	
+	# Create tables if they don't exist
+	conn.execute('''
+	CREATE TABLE IF NOT EXISTS "posts" (
+		"id"	TEXT PRIMARY KEY,
+		"content"	TEXT NOT NULL,
+		"date"	TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);
+	''')
+	
+	conn.commit()
+	conn.close()
+	
+	print(f"Database initialized at {db_path}")
+	return True
 
-
-
-CREATE TABLE "posts" (
-	"user"	TEXT,
-	"content"	TEXT NOT NULL,
-	"timestamp"	TEXT NOT NULL CHECK("timestamp" LIKE '____-__-__ __:__'),
-	 FOREIGN KEY("user") REFERENCES "users"("username")
-);
-'''
-
-conn = connect_db('database.db')
-conn.execute('''
-CREATE TABLE IF NOT EXISTS "users" (
-	"id"	TEXT,
-	"username"	VARCHAR(255) UNIQUE,
-	"password"	VARCHAR(255),
-	PRIMARY KEY("id")
-);
-''')
-
-conn.execute('''
-CREATE TABLE IF NOT EXISTS "posts" (
-	"id"	TEXT,
-	"username"	TEXT,
-	"title"	TEXT,
-	"content"	TEXT NOT NULL,
-	PRIMARY KEY("id"),
-	FOREIGN KEY("username") REFERENCES "users"("username")
-);
-''') 
-
-
+if __name__ == "__main__":
+	init_database()
