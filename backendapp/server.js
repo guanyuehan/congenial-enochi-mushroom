@@ -3,7 +3,7 @@ const path = require("path");
 
 const app = express();
 const PORT = 3000;
-const REMOTE_DB_URL = "http://localhost:5000";
+const REMOTE_DB_URL = "localhost:5000";
 
 // Middleware
 app.use(express.static(path.join(__dirname, "public")));
@@ -15,7 +15,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Routes
-app.get("/", async (req, res) => {
+app.get("/", async function (req, res) {
   try {
     // Fetch posts from the remote DB server
     const response = await fetch(`${REMOTE_DB_URL}/api/posts`);
@@ -28,12 +28,11 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.post("/post", async (req, res) => {
+app.post("/post", async function (req, res) {
   const { content } = req.body;
 
   if (content) {
     try {
-      // Send the post to the remote DB server
       await fetch(`${REMOTE_DB_URL}/api/posts`, {
         method: "POST",
         headers: {
