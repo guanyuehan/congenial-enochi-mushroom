@@ -69,7 +69,7 @@ def get_post(post_id):
 	try:
 		conn = get_db()
 		cursor = conn.cursor()
-		cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,))
+		cursor.execute('SELECT content, date FROM posts WHERE id = ?', (post_id,))
 		row = cursor.fetchone()
 		conn.close()
 		
